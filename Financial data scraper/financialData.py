@@ -43,14 +43,20 @@ def get_financial_data(tickers):
 
 
 def get_ticker(company_name):
-    # Search for the company name
-    results = search(company_name)
-    # Check if any results were found
-    if results['quotes']:
-        # Return the first result's symbol
-        # print(results)
-        return results['quotes'][0]['symbol']
-    else:
+    try:
+        # Perform search for the company
+        results = search(company_name)
+
+        # Check if results are valid and contain quotes
+        if results and 'quotes' in results:
+            # Find the best match for the company
+            ticker = results['quotes'][0]['symbol']
+            return ticker
+        else:
+            print(f"No ticker found for {company_name}.")
+            return None
+    except Exception as e:
+        print(f"An error occurred while searching for {company_name}: {e}")
         return None
 
 
