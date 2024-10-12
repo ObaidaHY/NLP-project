@@ -1,13 +1,16 @@
 from yahooquery import search
 import yfinance as yf
+import json
+import pandas as pd
+import numpy as np
 
 
-def get_financial_data():
+def get_financial_data(tickers):
     # List of company tickers
-    tickers = {
-        # Note: You will only get historical data for Twitter before the acquisition.
-        'Twitter': 'TWTR'
-    }
+    # tickers = {
+    #     # Note: You will only get historical data for Twitter before the acquisition.
+    #     'Twitter': 'TWTR'
+    # }
 
     # Define start and end dates for the time period you want
     start_date = '2010-01-01'
@@ -15,21 +18,26 @@ def get_financial_data():
 
     # Iterate through each company and download historical stock data
     for company, ticker in tickers.items():
-        print(f"Downloading data for {company} ({ticker})...")
+        try:
+            print(f"Downloading data for {company} ({ticker})...")
 
-        # Get historical stock data for the company
-        stock_data = yf.Ticker(ticker)
-        history = stock_data.history(
-            start=start_date, end=end_date, interval='1mo')  # Monthly data
+            # Get historical stock data for the company
+            stock_data = yf.Ticker(ticker)
+            history = stock_data.history(
+                start=start_date, end=end_date, interval='1mo')  # Monthly data
 
-        # Save the historical data to a CSV file
-        file_name = f"./financialData/{company.lower()}_stock_data.csv"
-        history.to_csv(file_name)
+            # Save the historical data to a CSV file
+            file_name = f"./financialData/{company.lower()}_stock_data.csv"
+            history.to_csv(file_name)
 
-        print(f"Data for {company} saved to {file_name}")
+            print(f"Data for {company} saved to {file_name}")
 
-    print("Download complete.")
+        except Exception as e:
+            print(
+                f"Couldn't get data for company : {company}. Please check if ticker is correct")
+            continue
 
+        print("Download complete.")
 
 # Import yahooquery for searching ticker symbols
 
@@ -40,16 +48,56 @@ def get_ticker(company_name):
     # Check if any results were found
     if results['quotes']:
         # Return the first result's symbol
-        print(results)
+        # print(results)
         return results['quotes'][0]['symbol']
     else:
         return None
 
 
 # Example usage
-company_name = "Apple"
-ticker = get_ticker(company_name)
-if ticker:
-    print(f"The ticker for {company_name} is {ticker}.")
-else:
-    print(f"No ticker found for {company_name}.")
+# company_name = "Twitter"
+# ticker = get_ticker(company_name)
+# if ticker:
+#     print(f"The ticker for {company_name} is {ticker}.")
+# else:
+#     print(f"No ticker found for {company_name}.")
+
+
+# Function to get tickers for a list of company names and save to JSON
+def save_company_tickers_to_json(company_names, json_file):
+    company_ticker_map = {}
+
+    # Loop through each company name
+    for company in company_names:
+        ticker = get_ticker(company)
+        if ticker:
+            company_ticker_map[company] = ticker
+            print(f"Found ticker for {company}: {ticker}")
+        else:
+            print(f"No ticker found for {company}")
+
+    # Save the dictionary to a JSON file
+    with open(json_file, 'w') as f:
+        json.dump(company_ticker_map, f, indent=4)
+
+    print(f"Company-ticker map saved to {json_file}")
+
+
+# Example usage
+# company_names = ["Twitter", "Microsoft", "Apple", "Amazon"]
+# json_file = "company_tickers.json"
+# save_company_tickers_to_json(company_names, json_file)
+
+
+# Load data and extract unique company names
+def extract_unique_companies(csv_file):
+    df = pd.read_csv(csv_file)
+    unique_companies = df['company'].unique().tolist()
+    return unique_companies
+
+
+# Example usage
+csv_file_path = 'layoffs.csv'  # Replace with the path to your CSV file
+unique_companies = extract_unique_companies(csv_file_path)
+json_file = "company_tickers.json"
+save_company_tickers_to_json(unique_companies, json_file)
