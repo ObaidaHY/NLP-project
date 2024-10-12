@@ -96,8 +96,26 @@ def extract_unique_companies(csv_file):
     return unique_companies
 
 
+def load_tickers_and_get_data(json_file):
+    try:
+        # Load company-ticker mapping from JSON file
+        with open(json_file, 'r') as f:
+            tickers = json.load(f)
+
+        # Send the tickers to the get_financial_data function
+        get_financial_data(tickers)
+
+    except FileNotFoundError:
+        print(f"File {json_file} not found.")
+    except json.JSONDecodeError:
+        print(f"Error decoding JSON from file {json_file}.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+
 # Example usage
 csv_file_path = 'layoffs.csv'  # Replace with the path to your CSV file
 unique_companies = extract_unique_companies(csv_file_path)
 json_file = "company_tickers.json"
 save_company_tickers_to_json(unique_companies, json_file)
+load_tickers_and_get_data(json_file)
